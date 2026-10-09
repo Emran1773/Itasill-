@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <link rel="icon" type="image/jpeg" href="icon.JPG">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07130f">
+  <meta name="description" content="اتصل — دفتر أرقامك ومفضلتك وسجل محاولات الاتصال في مكان واحد.">
+  <title>اتصل | تطبيق الاتصالات</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07130f;
+      --panel: #0d1e17;
+      --panel-2: #11271d;
+      --panel-3: #183428;
+      --green: #a6f0bd;
+      --green-dark: #72d99a;
+      --text: #f3f8f4;
+      --muted: #9aaea2;
+      --border: rgba(196, 231, 204, .11);
+      --danger: #ff8585;
+      --warning: #f5ce79;
+      --radius: 20px;
+      --shadow: 0 12px 34px rgba(0, 0, 0, .18);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      scroll-behavior: smooth;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: var(--safe-top) 0 var(--safe-bottom);
+      background:
+        radial-gradient(ellipse at 90% 0%, rgba(56, 115, 76, .13), transparent 35%),
+        var(--bg);
+      color: var(--text);
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 3px;
+    }
+
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .app-shell { min-height: 100vh; }
+
+    .sidebar {
+      display: none;
+      position: fixed;
+      inset: 0 0 0 auto;
+      width: 254px;
+      padding: 28px 18px;
+      background: rgba(9, 24, 17, .97);
+      border-left: 1px solid var(--border);
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 34px;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: var(--green);
+      color: #0a2114;
+      font-size: 25px;
+      font-weight: 900;
+      box-shadow: 0 6px 20px rgba(166, 240, 189, .12);
+    }
+
+    .brand-name { font-size: 21px; font-weight: 800; letter-spacing: -.6px; }
+    .brand-sub { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+
+    .nav-list { display: grid; gap: 7px; }
+
+    .nav-btn {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      gap: 13px;
+      text-align: right;
+      color: var(--muted);
+      border: 1px solid transparent;
+      border-radius: 13px;
+      padding: 12px 14px;
+      background: transparent;
+      transition: .18s ease;
+    }
+
+    .nav-btn:hover { background: var(--panel-2); color: var(--text); }
+    .nav-btn.active {
+      background: rgba(166, 240, 189, .1);
+      border-color: rgba(166, 240, 189, .12);
+      color: var(--green);
+    }
+
+    .nav-icon { width: 23px; text-align: center; font-size: 19px; }
+    .sidebar-footer {
+      position: absolute;
+      bottom: 25px;
+      right: 18px;
+      left: 18px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .main { width: 100%; min-width: 0; padding: 20px 16px 104px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .mobile-brand { display: flex; align-items: center; gap: 10px; }
+    .mobile-brand .brand-mark { width: 40px; height: 40px; border-radius: 13px; font-size: 21px; }
+    .mobile-brand .brand-name { font-size: 19px; }
+    .top-actions { display: flex; gap: 8px; }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: inline-grid;
+      place-items: center;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--panel);
+      color: var(--text);
+      transition: .18s ease;
+    }
+    .icon-btn:hover { border-color: rgba(166, 240, 189, .35); background: var(--panel-2); }
+
+    .page { display: none; animation: fadeIn .22s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome { margin: 5px 0 22px; }
+    .eyebrow {
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .4px;
+    }
+    h1 { margin: 5px 0 6px; font-size: clamp(24px, 5vw, 32px); line-height: 1.4; letter-spacing: -.7px; }
+    h2 { margin: 0; font-size: 18px; }
+    h3 { margin: 0; font-size: 15px; }
+    p { margin: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 23px 20px;
+      margin-bottom: 20px;
+      border-radius: 23px;
+      border: 1px solid rgba(166, 240, 189, .13);
+      background: linear-gradient(125deg, #173d2b, #10271c 65%, #0e2018);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 175px;
+      height: 175px;
+      border-radius: 50%;
+      border: 1px solid rgba(166, 240, 189, .09);
+      left: -58px;
+      top: -72px;
+      box-shadow: 0 0 0 24px rgba(166, 240, 189, .025), 0 0 0 48px rgba(166, 240, 189, .02);
+      pointer-events: none;
+    }
+
+    .hero h2 { position: relative; z-index: 1; font-size: 21px; margin-bottom: 7px; }
+    .hero p { position: relative; z-index: 1; max-width: 430px; color: #c1d8c7; font-size: 13px; }
+    .hero .btn { position: relative; z-index: 1; margin-top: 17px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 27px; }
+    .stat-card {
+      padding: 13px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      min-width: 0;
+    }
+    .stat-icon { font-size: 17px; margin-bottom: 7px; }
+    .stat-number { display: block; font-size: 23px; line-height: 1.2; font-weight: 800; }
+    .stat-label { display: block; color: var(--muted); font-size: 10px; margin-top: 5px; white-space: nowrap; }
+
+    .section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .section-head .muted { font-size: 12px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 27px; }
+
+    .quick-card {
+      min-height: 120px;
+      text-align: right;
+      padding: 16px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      transition: .2s ease;
+    }
+    .quick-card:hover { transform: translateY(-2px); border-color: rgba(166, 240, 189, .3); }
+    .quick-card .quick-icon {
+      display: grid;
+      place-items: center;
+      width: 39px;
+      height: 39px;
+      border-radius: 13px;
+      margin-bottom: 13px;
+      background: rgba(166, 240, 189, .11);
+      color: var(--green);
+      font-size: 21px;
+    }
+    .quick-card strong { display: block; font-size: 14px; }
+    .quick-card span:last-child { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 17px;
+      box-shadow: var(--shadow);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 43px;
+      padding: 10px 15px;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      font-weight: 700;
+      font-size: 13px;
+      transition: .18s ease;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { color: #092015; background: var(--green); }
+    .btn-primary:hover { background: #c2f8d0; }
+    .btn-secondary { background: var(--panel-2); border-color: var(--border); color: var(--text); }
+    .btn-secondary:hover { border-color: rgba(166, 240, 189, .3); }
+    .btn-danger { background: rgba(255, 133, 133, .1); border-color: rgba(255, 133, 133, .15); color: var(--danger); }
+    .btn-block { width: 100%; }
+    .btn-sm { min-height: 35px; padding: 7px 10px; font-size: 11px; border-radius: 10px; }
+    .btn-quiet { background: transparent; color: var(--muted); border-color: var(--border); }
+
+    .field { display: grid; gap: 7px; margin-bottom: 15px; }
+    .field label { color: #cbd9cf; font-size: 12px; font-weight: 700; }
+    .input, .select {
+      display: block;
+      width: 100%;
+      min-height: 47px;
+      padding: 11px 13px;
+      background: #091710;
+      color: var(--text);
+      border: 1px solid #294034;
+      border-radius: 12px;
+      outline: none;
+      transition: border-color .18s;
+    }
+    .input:focus, .select:focus { border-color: var(--green-dark); }
+    .input::placeholder { color: #687f70; }
+    .field-help { color: var(--muted); font-size: 11px; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .search-wrap { position: relative; margin-bottom: 15px; }
+    .search-wrap .input { padding-right: 43px; }
+    .search-symbol { position: absolute; right: 14px; top: 11px; color: var(--muted); font-size: 18px; pointer-events: none; }
+
+    .contact-list { display: grid; gap: 9px; }
+    .contact-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px;
+      border-radius: 15px;
+      border: 1px solid var(--border);
+      background: #0b1a13;
+      min-width: 0;
+    }
+    .avatar {
+      width: 43px;
+      height: 43px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #244c36, #153023);
+      color: var(--green);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { display: block; font-weight: 700; overflow-wrap: anywhere; }
+    .contact-phone { display: block; color: var(--muted); font-size: 12px; direction: ltr; text-align: right; overflow-wrap: anywhere; }
+    .contact-actions { display: flex; align-items: center; gap: 5px; }
+    .contact-actions .icon-btn { width: 35px; height: 35px; border-radius: 11px; font-size: 15px; }
+    .favorite-on { color: var(--green) !important; }
+
+    .empty-state { padding: 35px 15px; text-align: center; border: 1px dashed #294034; border-radius: 17px; }
+    .empty-icon { font-size: 34px; margin-bottom: 9px; }
+    .empty-state p { margin: 5px auto 14px; max-width: 300px; color: var(--muted); font-size: 12px; }
+
+    .page-heading { margin-bottom: 20px; }
+    .page-heading p { color: var(--muted); font-size: 12px; margin-top: 5px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .toolbar > * { flex: 1; }
+    .toolbar .input, .toolbar .select { min-width: 0; }
+    .toolbar .btn { flex: 0 0 auto; }
+
+    .dial-card { max-width: 440px; margin: 0 auto; }
+    .dial-display { padding: 18px 5px 20px; text-align: center; }
+    .dial-display .muted { font-size: 11px; }
+    .dial-number {
+      width: 100%;
+      margin: 13px 0 7px;
+      padding: 9px 5px;
+      text-align: center;
+      font-size: clamp(23px, 6vw, 31px);
+      letter-spacing: 1px;
+      direction: ltr;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 0;
+    }
+    .dial-number:focus { outline: none; border-color: var(--green); }
+    .dial-number::placeholder { color: #4e6657; }
+    .dial-tools { display: flex; justify-content: center; gap: 8px; margin-bottom: 17px; }
+    .dial-tools .btn { min-width: 80px; }
+    .dial-pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .dial-key {
+      min-height: 62px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #10251a;
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 600;
+      transition: .15s ease;
+    }
+    .dial-key:hover { background: #183729; border-color: #315740; }
+    .dial-key:active { transform: scale(.96); background: #254d37; }
+    .dial-key small { display: block; color: var(--muted); font-size: 9px; font-weight: 400; margin-top: -3px; }
+    .dial-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 17px; }
+    .call-btn { min-height: 53px; border-radius: 16px; font-size: 16px; }
+    .dial-note { margin-top: 17px; text-align: center; color: var(--muted); font-size: 11px; }
+
+    .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+    .filters .field { margin: 0; }
+    .call-row { align-items: flex-start; }
+    .call-type-icon { font-size: 18px; }
+    .call-meta { margin-top: 4px; font-size: 11px; color: var(--muted); }
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 7px;
+      font-size: 10px;
+      margin-right: 4px;
+      background: rgba(166, 240, 189, .09);
+      color: var(--green);
+    }
+
+    .notice {
+      padding: 13px 14px;
+      border: 1px solid rgba(245, 206, 121, .18);
+      background: rgba(245, 206, 121, .06);
+      color: #e4d5ad;
+      border-radius: 13px;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .notice strong { color: var(--warning); }
+    .status-line { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+    .status-dot { width: 9px; height: 9px; flex-shrink: 0; border-radius: 50%; background: var(--warning); }
+    .status-dot.green { background: var(--green); }
+    .status-dot.red { background: var(--danger); }
+    .status-panel { padding: 15px; border-radius: 14px; background: #091710; border: 1px solid var(--border); margin-bottom: 18px; }
+    .status-title { font-weight: 700; font-size: 13px; }
+    .status-detail { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .settings-group { margin-bottom: 20px; }
+    .settings-group h3 { margin-bottom: 12px; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .settings-row:last-child { border-bottom: 0; }
+    .settings-row strong { display: block; font-size: 13px; }
+    .settings-row p { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 30;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      padding: 8px 5px calc(8px + var(--safe-bottom));
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 2px;
+      background: rgba(8, 20, 14, .96);
+      backdrop-filter: blur(18px);
+      border-top: 1px solid var(--border);
+    }
+    .bottom-nav .nav-btn {
+      display: grid;
+      justify-items: center;
+      justify-content: center;
+      gap: 1px;
+      padding: 5px 2px;
+      border-radius: 11px;
+      font-size: 9px;
+      text-align: center;
+    }
+    .bottom-nav .nav-icon { font-size: 19px; width: auto; }
+    .bottom-nav .nav-btn.active { background: rgba(166, 240, 189, .08); }
+
+    .toast-region {
+      position: fixed;
+      top: calc(12px + var(--safe-top));
+      left: 12px;
+      right: 12px;
+      z-index: 100;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      width: fit-content;
+      max-width: 100%;
+      padding: 12px 17px;
+      border-radius: 13px;
+      background: #183b29;
+      border: 1px solid rgba(166, 240, 189, .2);
+      color: #eaf9ed;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .35);
+      font-size: 12px;
+      animation: fadeIn .2s ease;
+      overflow-wrap: anywhere;
+    }
+    .toast.error { background: #3b2020; border-color: rgba(255, 133, 133, .3); color: #ffe4e4; }
+    .toast.warning { background: #392f1c; border-color: rgba(245, 206, 121, .3); color: #fff0c9; }
+
+    dialog {
+      width: min(440px, calc(100% - 28px));
+      max-height: min(85vh, 700px);
+      overflow: auto;
+      padding: 22px;
+      color: var(--text);
+      background: #0d1e17;
+      border: 1px solid #2c4535;
+      border-radius: 22px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+    }
+    dialog::backdrop { background: rgba(0, 0, 0, .7); backdrop-filter: blur(3px); }
+    .dialog-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 19px; }
+    .dialog-head h2 { font-size: 18px; }
+    .dialog-actions { display: flex; gap: 8px; margin-top: 19px; }
+    .dialog-actions .btn { flex: 1; }
+
+    .divider { height: 1px; background: var(--border); margin: 19px 0; }
+    .recent-home { display: grid; gap: 9px; }
+    .hidden { display: none !important; }
+    .ltr { direction: ltr; text-align: left; }
+    .file-input { display: none; }
+    .subsection { margin-top: 22px; }
+    .subsection:first-child { margin-top: 0; }
+
+    @media (min-width: 540px) {
+      .main { padding: 27px 25px 110px; }
+      .stats-grid { gap: 13px; }
+      .stat-card { padding: 17px; }
+      .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .quick-card { min-height: 135px; }
+      .contact-row { padding: 14px; }
+    }
+
+    @media (min-width: 900px) {
+      .sidebar { display: block; }
+      .main { margin-right: 254px; width: calc(100% - 254px); padding: 34px clamp(28px, 4vw, 65px) 50px; }
+      .mobile-brand { display: none; }
+      .bottom-nav { display: none; }
+      .topbar { margin-bottom: 34px; }
+      .page.active { max-width: 1100px; margin: 0 auto; }
+      .welcome { margin-bottom: 27px; }
+      .hero { padding: 30px; }
+      .hero h2 { font-size: 25px; }
+      .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .dashboard-columns { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; }
+      .dashboard-columns > section { min-width: 0; }
+      .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .dial-card { max-width: 470px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="القائمة الرئيسية">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">ا</div>
+        <div><span class="brand-name">اتصل</span><span class="brand-sub">مساحة اتصالاتك الشخصية</span></div>
+      </div>
+      <nav class="nav-list" id="desktopNav">
+        <button class="nav-btn active" data-page="home"><span class="nav-icon">⌂</span> الرئيسية</button>
+        <button class="nav-btn" data-page="dialer"><span class="nav-icon">▦</span> لوحة الاتصال</button>
+        <button class="nav-btn" data-page="contacts"><span class="nav-icon">♙</span> جهات الاتصال</button>
+        <button class="nav-btn" data-page="favorites"><span class="nav-icon">☆</span> المفضلة</button>
+        <button class="nav-btn" data-page="history"><span class="nav-icon">◷</span> سجل المحاولات</button>
+        <button class="nav-btn" data-page="internet"><span class="nav-icon">⌁</span> اتصال الإنترنت</button>
+        <button class="nav-btn" data-page="settings"><span class="nav-icon">⚙</span> الإعدادات والنسخ الاحتياطي</button>
+      </nav>
+      <div class="sidebar-footer">بياناتك محفوظة محليًا على هذا الجهاز. لا تتم مزامنتها تلقائيًا.</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="mobile-brand">
+          <div class="brand-mark" aria-hidden="true">ا</div>
+          <div><span class="brand-name">اتصل</span><span class="brand-sub">كل أرقامك في مكان واحد</span></div>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="headerDialBtn" aria-label="فتح لوحة الاتصال" title="لوحة الاتصال">▦</button>
+          <button class="icon-btn" id="headerAddBtn" aria-label="إضافة جهة اتصال" title="إضافة جهة اتصال">＋</button>
+        </div>
+      </header>
+
+      <section class="page active" id="page-home" aria-labelledby="homeTitle">
+        <div class="welcome">
+          <span class="eyebrow">مساحتك الشخصية</span>
+          <h1 id="homeTitle">تواصل بسهولة.</h1>
+          <p class="muted">أرقامك المهمة، منظمة وجاهزة حين تحتاج إليها.</p>
+        </div>
+
+        <div class="hero">
+          <span class="eyebrow">مرحبًا بك في اتصل</span>
+          <h2>كل اتصال يبدأ بخطوة بسيطة.</h2>
+          <p>احتفظ بجهات اتصالك، نظّم أرقامك المفضلة، وارجع إلى محاولات الاتصال السابقة من واجهة واحدة.</p>
+          <button class="btn btn-primary" data-go="dialer"> <span aria-hidden="true">⌁</span> افتح لوحة الاتصال</button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">♙</div><span class="stat-number" id="statContacts">0</span><span class="stat-label">جهات الاتصال</span></div>
+          <div class="stat-card"><div class="stat-icon">☆</div><span class="stat-number" id="statFavorites">0</span><span class="stat-label">المفضلة</span></div>
+          <div class="stat-card"><div class="stat-icon">◷</div><span class="stat-number" id="statHistory">0</span><span class="stat-label">محاولات الاتصال</span></div>
+        </div>
+
+        <div class="section-head"><h2>الوصول السريع</h2><span class="muted">أدواتك الأساسية</span></div>
+        <div class="quick-grid">
+          <button class="quick-card" data-go="contacts"><span class="quick-icon">♙</span><strong>جهات الاتصال</strong><span>إدارة الأسماء والأرقام</span></button>
+          <button class="quick-card" data-go="favorites"><span class="quick-icon">☆</span><strong>المفضلة</strong><span>أرقامك الأكثر أهمية</span></button>
+          <button class="quick-card" data-go="history"><span class="quick-icon">◷</span><strong>سجل المحاولات</strong><span>العودة إلى أرقام سابقة</span></button>
+          <button class="quick-card" data-go="internet"><span class="quick-icon">⌁</span><strong>اتصال الإنترنت</strong><span>إعداد التكامل مستقبلًا</span></button>
+        </div>
+
+        <div class="dashboard-columns">
+          <section class="subsection">
+            <div class="section-head"><h2>جهات الاتصال</h2><button class="btn btn-quiet btn-sm" data-go="contacts">عرض الكل ←</button></div>
+            <div class="contact-list" id="homeContacts"></div>
+          </section>
+          <section class="subsection">
+            <div class="section-head"><h2>آخر المحاولات</h2><button class="btn btn-quiet btn-sm" data-go="history">عرض السجل ←</button></div>
+            <div class="recent-home" id="homeHistory"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="page-dialer" aria-labelledby="dialerTitle">
+        <div class="page-heading"><span class="eyebrow">اتصال هاتفي</span><h1 id="dialerTitle">لوحة الاتصال</h1><p>أدخل الرقم يدويًا أو اختر أحد الأرقام من جهات اتصالك.</p></div>
+        <div class="card dial-card">
+          <div class="dial-display">
+            <span class="muted">الرقم المراد الاتصال به</span>
+            <input id="dialNumber" class="dial-number" type="tel" inputmode="tel" autocomplete="tel" placeholder="أدخل رقم الهاتف" aria-label="رقم الهاتف">
+            <div id="dialContactHint" class="muted small" aria-live="polite">يمكنك كتابة الرقم أو استخدام لوحة الأرقام.</div>
+          </div>
+          <div class="dial-tools">
+            <button class="btn btn-secondary btn-sm" id="copyNumberBtn">نسخ الرقم</button>
+            <button class="btn btn-secondary btn-sm" id="clearNumberBtn">مسح الكل</button>
+            <button class="btn btn-secondary btn-sm" id="deleteDigitBtn" aria-label="حذف آخر رقم">⌫ حذف</button>
+          </div>
+          <div class="dial-pad" id="dialPad" aria-label="لوحة الأرقام">
+            <button class="dial-key" data-digit="1">1<small>　</small></button>
+            <button class="dial-key" data-digit="2">2<small>أ ب ج</small></button>
+            <button class="dial-key" data-digit="3">3<small>د هـ و</small></button>
+            <button class="dial-key" data-digit="4">4<small>ز ح ط</small></button>
+            <button class="dial-key" data-digit="5">5<small>ي ك ل</small></button>
+            <button class="dial-key" data-digit="6">6<small>م ن س</small></button>
+            <button class="dial-key" data-digit="7">7<small>ع ف ص</small></button>
+            <button class="dial-key" data-digit="8">8<small>ق ر ش</small></button>
+            <button class="dial-key" data-digit="9">9<small>ت ث خ</small></button>
+            <button class="dial-key" data-digit="*">*</button>
+            <button class="dial-key" data-digit="0">0<small>+</small></button>
+            <button class="dial-key" data-digit="#">#</button>
+          </div>
+          <div class="dial-bottom">
+            <button class="btn btn-primary call-btn" id="callButton">☎ اتصال</button>
+            <button class="btn btn-secondary call-btn" id="saveDialContactBtn">＋ حفظ كجهة اتصال</button>
+          </div>
+          <p class="dial-note">سيطلب التطبيق فتح برنامج الاتصال في جهازك. لا يستطيع الموقع تأكيد نجاح المكالمة.</p>
+        </div>
+      </section>
+
+      <section class="page" id="page-contacts" aria-labelledby="contactsTitle">
+        <div class="page-heading"><span class="eyebrow">دفتر الأرقام</span><h1 id="contactsTitle">جهات الاتصال</h1><p>أضف الأرقام المهمة، وعدّلها وابحث عنها وقت الحاجة.</p></div>
+        <div class="toolbar">
+          <button class="btn btn-primary" id="addContactBtn">＋ إضافة جهة اتصال</button>
+          <button class="btn btn-secondary" id="importCsvBtn">استيراد CSV</button>
+          <button class="btn btn-secondary" id="deviceContactsBtn">دفتر الهاتف</button>
+          <input type="file" class="file-input" id="csvFile" accept=".csv,text/csv">
+        </div>
+        <div class="search-wrap"><span class="search-symbol">⌕</span><input class="input" id="contactSearch" type="search" placeholder="ابحث بالاسم أو رقم الهاتف..." aria-label="البحث في جهات الاتصال"></div>
+        <div class="contact-list" id="contactsList"></div>
+      </section>
+
+      <section class="page" id="page-favorites" aria-labelledby="favoritesTitle">
+        <div class="page-heading"><span class="eyebrow">الوصول السريع</span><h1 id="favoritesTitle">المفضلة</h1><p>أرقامك المفضلة مرتبة حسب الاسم.</p></div>
+        <div class="contact-list" id="favoritesList"></div>
+      </section>
+
+      <section class="page" id="page-history" aria-labelledby="historyTitle">
+        <div class="page-heading"><span class="eyebrow">سجل محلي</span><h1 id="historyTitle">سجل المحاولات</h1><p>العمليات التي طلبت إجراءها من داخل هذا التطبيق فقط.</p></div>
+        <div class="notice"><strong>تنبيه:</strong> هذا ليس سجل شركة الاتصالات. لا يمكن للمتصفح معرفة جميع المكالمات الواردة أو الصادرة، ولا تأكيد إن كانت المحاولة قد أُجيبت.</div>
+        <div class="filters">
+          <div class="field"><label for="historyType">نوع العملية</label><select class="select" id="historyType"><option value="all">كل العمليات</option><option value="phone">طلب اتصال هاتفي</option><option value="internet">محاولة اتصال عبر الإنترنت</option></select></div>
+          <div class="field"><label for="historyDate">التاريخ</label><select class="select" id="historyDate"><option value="all">كل التواريخ</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">آخر 30 يومًا</option></select></div>
+        </div>
+        <div class="toolbar"><button class="btn btn-danger btn-sm" id="clearHistoryBtn">مسح السجل بالكامل</button></div>
+        <div class="contact-list" id="historyList"></div>
+      </section>
+
+      <section class="page" id="page-internet" aria-labelledby="internetTitle">
+        <div class="page-heading"><span class="eyebrow">اتصال عبر الإنترنت</span><h1 id="internetTitle">المكالمات عبر الإنترنت</h1><p>واجهة جاهزة للتكامل مستقبلًا مع مزود مكالمات حقيقي.</p></div>
+        <div class="notice"><strong>الخدمة غير مفعّلة:</strong> لا توجد حاليًا بنية اتصالات متصلة بهذا التطبيق. لن يتم إجراء مكالمة وهمية.</div>
+        <div class="card">
+          <div class="status-panel">
+            <div class="status-line"><span class="status-dot"></span><span class="status-title">حالة الخدمة: غير متصلة</span></div>
+            <p class="status-detail">لم يتم إعداد خادم إشارات أو مزود اتصال. إدخال الرقم وحده لا ينشئ مكالمة.</p>
+          </div>
+          <div class="field"><label for="internetTarget">رقم الهاتف أو معرّف المستخدم</label><input class="input" id="internetTarget" type="text" autocomplete="off" placeholder="أدخل رقمًا أو معرّفًا"></div>
+          <div class="field"><label for="internetProvider">حالة التكامل</label><input class="input" id="internetProvider" value="لم يتم ربط مزود اتصال" readonly></div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="internetStartBtn">بدء الاتصال</button>
+            <button class="btn btn-secondary" id="internetEndBtn" disabled>إنهاء الاتصال</button>
+          </div>
+          <p id="internetMessage" class="muted small" style="margin-top:15px" aria-live="polite">لا توجد مكالمة نشطة. يتطلب الاتصال الحقيقي خادمًا ومزود خدمة ومصادقة آمنة.</p>
+          <div class="divider"></div>
+          <h3>ما المطلوب لتفعيل الخدمة؟</h3>
+          <p class="muted small" style="margin-top:8px">مزود مكالمات يدعم WebRTC أو واجهة اتصال، وخادم خلفي لإدارة الجلسات والإشارات، واتصال آمن عبر HTTPS، ومصادقة المستخدمين، وخدمة STUN/TURN عند الحاجة. تحفظ المفاتيح السرية على الخادم، وليس داخل هذا الملف.</p>
+        </div>
+      </section>
+
+      <section class="page" id="page-settings" aria-labelledby="settingsTitle">
+        <div class="page-heading"><span class="eyebrow">التحكم والخصوصية</span><h1 id="settingsTitle">الإعدادات والنسخ الاحتياطي</h1><p>تحكم في بياناتك المحلية، واحتفظ بنسخة احتياطية قابلة للاستعادة.</p></div>
+        <div class="card settings-group">
+          <h3>النسخ الاحتياطي</h3>
+          <div class="settings-row"><div><strong>تصدير البيانات</strong><p>حفظ جهات الاتصال وسجل المحاولات والإعدادات في ملف JSON.</p></div><button class="btn btn-primary btn-sm" id="exportBtn">تصدير</button></div>
+          <div class="settings-row"><div><strong>استيراد نسخة احتياطية</strong><p>استعادة البيانات من ملف JSON تم تصديره من التطبيق.</p></div><button class="btn btn-secondary btn-sm" id="importBackupBtn">استيراد</button></div>
+          <input class="file-input" id="backupFile" type="file" accept=".json,application/json">
+        </div>
+        <div class="card settings-group">
+          <h3>الخصوصية والتخزين</h3>
+          <div class="settings-row"><div><strong>مكان حفظ البيانات</strong><p>داخل مساحة التخزين المحلية للمتصفح على هذا الجهاز.</p></div><span class="tag">محلي</span></div>
+          <div class="settings-row"><div><strong>المزامنة بين الأجهزة</strong><p>غير متاحة. تصدير نسخة احتياطية لنقل البيانات يدويًا.</p></div><span class="tag">غير مفعّلة</span></div>
+          <div class="settings-row"><div><strong>تثبيت تطبيق ويب تقدمي</strong><p>يتطلب ملفات PWA إضافية واستضافة مناسبة.</p></div><span class="tag">غير مكتمل</span></div>
+        </div>
+        <div class="card settings-group">
+          <h3>إدارة البيانات</h3>
+          <p class="muted small" style="margin-bottom:14px">قد تفقد بياناتك إذا مسحت بيانات المتصفح أو استخدمت جهازًا آخر. صدّر نسخة احتياطية دورية.</p>
+          <button class="btn btn-danger btn-block" id="deleteAllBtn">حذف جميع البيانات المحلية</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="mobileNav" aria-label="التنقل السفلي">
+      <button class="nav-btn active" data-page="home"><span class="nav-icon">⌂</span><span>الرئيسية</span></button>
+      <button class="nav-btn" data-page="contacts"><span class="nav-icon">♙</span><span>الأسماء</span></button>
+      <button class="nav-btn" data-page="dialer"><span class="nav-icon">▦</span><span>اتصال</span></button>
+      <button class="nav-btn" data-page="favorites"><span class="nav-icon">☆</span><span>المفضلة</span></button>
+      <button class="nav-btn" data-page="history"><span class="nav-icon">◷</span><span>السجل</span></button>
+    </nav>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog id="contactDialog" aria-labelledby="contactDialogTitle">
+    <div class="dialog-head">
+      <h2 id="contactDialogTitle">إضافة جهة اتصال</h2>
+      <button class="icon-btn" id="closeContactDialog" aria-label="إغلاق">×</button>
+    </div>
+    <form id="contactForm">
+      <input type="hidden" id="contactId">
+      <div class="field"><label for="contactName">الاسم</label><input class="input" id="contactName" maxlength="100" required autocomplete="name" placeholder="الاسم الكامل"></div>
+      <div class="field"><label for="contactPhone">رقم الهاتف</label><input class="input" id="contactPhone" type="tel" inputmode="tel" maxlength="40" required autocomplete="tel" placeholder="+966 5xxxxxxxx"><span class="field-help">يمكنك استخدام مفتاح الدولة، مثل ‎+966 أو ‎+20.</span></div>
+      <div class="field"><label><input id="contactFavorite" type="checkbox"> إضافة إلى المفضلة</label></div>
+      <div class="dialog-actions"><button class="btn btn-secondary" type="button" id="cancelContactDialog">إلغاء</button><button class="btn btn-primary" type="submit">حفظ جهة الاتصال</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="detailDialog" aria-labelledby="detailTitle">
+    <div class="dialog-head"><h2 id="detailTitle">بيانات جهة الاتصال</h2><button class="icon-btn" id="closeDetailDialog" aria-label="إغلاق">×</button></div>
+    <div id="detailContent"></div>
+    <div class="dialog-actions"><button class="btn btn-secondary" id="detailCloseBtn">إغلاق</button></div>
+  </dialog>
+
+  <script>
+    "use strict";
+
+    /* =========================================================
+       اتصل — التطبيق الرئيسي
+       جميع البيانات محلية، ولا توجد خدمة اتصال عبر الإنترنت
+       موصولة في هذه النسخة.
+    ========================================================= */
+
+    const STORAGE_KEY = "ittasil.app.data.v1";
+    const MAX_CONTACTS = 5000;
+    const MAX_HISTORY = 2000;
+    const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    function createId() {
+      if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+        return globalThis.crypto.randomUUID();
+      }
+      return "id-" + Date.now().toString(36) + "-" +
+        Math.random().toString(36).slice(2, 12);
+    }
+
+    function emptyState() {
+      return {
+        version: 1,
+        contacts: [],
+        history: [],
+        settings: { lastPage: "home" }
+      };
+    }
+
+    let state = emptyState();
+    let storageAvailable = true;
+    let currentPage = "home";
+
+    function showToast(message, type = "success") {
+      const region = $("#toastRegion");
+      const toast = document.createElement("div");
+      toast.className = "toast" + (type === "error" ? " error" : type === "warning" ? " warning" : "");
+      toast.textContent = String(message);
+      region.appendChild(toast);
+      window.setTimeout(() => toast.remove(), 3600);
+    }
+
+    function normalizeDigits(value) {
+      const arabic = "٠١٢٣٤٥٦٧٨٩";
+      const persian = "۰۱۲۳۴۵۶۷۸۹";
+      return String(value ?? "").replace(/[٠-٩۰-۹]/g, character => {
+        const a = arabic.indexOf(character);
+        if (a !== -1) return String(a);
+        const p = persian.indexOf(character);
+        return p !== -1 ? String(p) : character;
+      });
+    }
+
+    function cleanPhone(value) {
+      return normalizeDigits(value).trim().replace(/[\u200e\u200f]/g, "");
+    }
+
+    function phoneKey(value) {
+      return cleanPhone(value).replace(/[\s().-]/g, "");
+    }
+
+    function validPhone(value) {
+      const phone = cleanPhone(value);
+      if (!phone || phone.length > 40) return false;
+      if (!/^[+*#0-9()\s.\-]+$/.test(phone)) return false;
+      const digits = phone.replace(/\D/g, "");
+      if (digits.length < 3 || digits.length > 20) return false;
+      if ((phone.match(/\+/g) || []).length > 1) return false;
+      if (phone.includes("+") && !phone.startsWith("+")) return false;
+      return true;
+    }
+
+    function safeDate(value) {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function normalizeContact(raw) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+      const name = String(raw.name ?? "").trim().slice(0, 100);
+      const phone = cleanPhone(raw.phone);
+      if (!name || !validPhone(phone)) return null;
+      return {
+        id: typeof raw.id === "string" && raw.id.length <= 100 ? raw.id : createId(),
+        name,
+        phone,
+        favorite: raw.favorite === true,
+        createdAt: safeDate(raw.createdAt)?.toISOString() || new Date().toISOString(),
+        updatedAt: safeDate(raw.updatedAt)?.toISOString() || new Date().toISOString()
+      };
+    }
+
+    function normalizeHistoryItem(raw) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+      const phone = cleanPhone(raw.phone);
+      if (!validPhone(phone)) return null;
+      const date = safeDate(raw.at);
+      const type = raw.type === "internet" ? "internet" : "phone";
+      return {
+        id: typeof raw.id === "string" && raw.id.length <= 100 ? raw.id : createId(),
+        contactId: typeof raw.contactId === "string" ? raw.contactId : "",
+        name: String(raw.name ?? "").trim().slice(0, 100),
+        phone,
+        type,
+        at: (date || new Date()).toISOString(),
+        action: type === "internet" ? "محاولة اتصال عبر الإنترنت" : "طلب فتح الاتصال الهاتفي"
+      };
+    }
+
+    function normalizeState(raw) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+        throw new Error("تنسيق البيانات غير صحيح.");
+      }
+      if (!Array.isArray(raw.contacts) || !Array.isArray(raw.history)) {
+        throw new Error("النسخة الاحتياطية لا تحتوي على قوائم بيانات صالحة.");
+      }
+
+      const contacts = [];
+      const seenPhones = new Set();
+
+      for (const item of raw.contacts.slice(0, MAX_CONTACTS * 2)) {
+        const contact = normalizeContact(item);
+        if (!contact) continue;
+        const key = phoneKey(contact.phone);
+        if (seenPhones.has(key)) continue;
+        seenPhones.add(key);
+        contacts.push(contact);
+        if (contacts.length >= MAX_CONTACTS) break;
+      }
+
+      const history = raw.history
+        .slice(0, MAX_HISTORY * 2)
+        .map(normalizeHistoryItem)
+        .filter(Boolean)
+        .slice(0, MAX_HISTORY);
+
+      const settings = raw.settings && typeof raw.settings === "object"
+        ? { lastPage: typeof raw.settings.lastPage === "string" ? raw.settings.lastPage : "home" }
+        : { lastPage: "home" };
+
+      return { version: 1, contacts, history, settings };
+    }
+
+    function loadState() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+          state = emptyState();
+          return;
+        }
+        state = normalizeState(JSON.parse(stored));
+      } catch (error) {
+        storageAvailable = false;
+        state = emptyState();
+        console.error("تعذر تحميل البيانات المحلية:", error);
+        showToast("تعذر قراءة التخزين المحلي. قد تكون بيانات المتصفح غير متاحة.", "warning");
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        storageAvailable = true;
+        return true;
+      } catch (error) {
+        storageAvailable = false;
+        console.error("تعذر حفظ البيانات:", error);
+        showToast("تعذر حفظ البيانات. تحقق من مساحة التخزين وإعدادات المتصفح.", "error");
+        return false;
+      }
+    }
+
+    function persistAndRender(message) {
+      if (saveState()) {
+        renderAll();
+        if (message) showToast(message);
+        return true;
+      }
+      return false;
+    }
+
+    function escapeCsv(value) {
+      const text = String(value ?? "");
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
+
+    function initials(name) {
+      const parts = String(name).trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return "؟";
+      return parts.length === 1
+        ? Array.from(parts[0]).slice(0, 2).join("")
+        : Array.from(parts[0])[0] + Array.from(parts[1])[0];
+    }
+
+    function createElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined && text !== null) element.textContent = String(text);
+      return element;
+    }
+
+    function createButton(label, className, action, title) {
+      const button = createElement("button", className, label);
+      button.type = "button";
+      if (title) button.title = title;
+      if (action) button.addEventListener("click", action);
+      return button;
+    }
+
+    function createEmpty(icon, title, description, buttonText, action) {
+      const wrap = createElement("div", "empty-state");
+      wrap.append(createElement("div", "empty-icon", icon));
+      wrap.append(createElement("h3", "", title));
+      wrap.append(createElement("p", "", description));
+      if (buttonText && action) {
+        wrap.append(createButton(buttonText, "btn btn-primary btn-sm", action));
+      }
+      return wrap;
+    }
+
+    function formatDate(value) {
+      const date = safeDate(value);
+      if (!date) return "تاريخ غير معروف";
+      try {
+        return new Intl.DateTimeFormat("ar", {
+          year: "numeric", month: "short", day: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        }).format(date);
+      } catch (_) {
+        return date.toLocaleString();
+      }
+    }
+
+    function contactById(id) {
+      return state.contacts.find(contact => contact.id === id) || null;
+    }
+
+    function findContactByPhone(phone) {
+      const key = phoneKey(phone);
+      return state.contacts.find(contact => phoneKey(contact.phone) === key) || null;
+    }
+
+    function findDuplicate(phone, exceptId = "") {
+      const key = phoneKey(phone);
+      return state.contacts.find(contact =>
+        contact.id !== exceptId && phoneKey(contact.phone) === key
+      ) || null;
+    }
+
+    function sortedContacts(list = state.contacts) {
+      return [...list].sort((a, b) =>
+        a.name.localeCompare(b.name, "ar", { sensitivity: "base" })
+      );
+    }
+
+    function createAvatar(name) {
+      return createElement("div", "avatar", initials(name));
+    }
+
+    function renderContactRow(contact, options = {}) {
+      const row = createElement("article", "contact-row");
+      row.append(createAvatar(contact.name));
+
+      const info = createElement("div", "contact-info");
+      const name = createElement("span", "contact-name", contact.name);
+      const phone = createElement("span", "contact-phone", contact.phone);
+      info.append(name, phone);
+      row.append(info);
+
+      const actions = createElement("div", "contact-actions");
+      const favoriteButton = createButton(
+        contact.favorite ? "★" : "☆",
+        "icon-btn" + (contact.favorite ? " favorite-on" : ""),
+        () => toggleFavorite(contact.id),
+        contact.favorite ? "إزالة من المفضلة" : "إضافة إلى المفضلة"
+      );
+      favoriteButton.setAttribute("aria-label", favoriteButton.title);
+
+      const callButton = createButton("☎", "icon-btn", () => startPhoneCall(contact.phone), "الاتصال");
+      callButton.setAttribute("aria-label", "الاتصال بـ " + contact.name);
+
+      const detailButton = createButton("⋯", "icon-btn", () => showContactDetails(contact.id), "تفاصيل جهة الاتصال");
+      detailButton.setAttribute("aria-label", "تفاصيل " + contact.name);
+
+      actions.append(favoriteButton, callButton, detailButton);
+
+      if (options.editable) {
+        const editButton = createButton("✎", "icon-btn", () => openContactDialog(contact), "تعديل");
+        editButton.setAttribute("aria-label", "تعديل " + contact.name);
+        actions.append(editButton);
+
+        const deleteButton = createButton("×", "icon-btn", () => deleteContact(contact.id), "حذف");
+        deleteButton.setAttribute("aria-label", "حذف " + contact.name);
+        actions.append(deleteButton);
+      }
+
+      row.append(actions);
+      return row;
+    }
+
+    function renderHistoryRow(item, options = {}) {
+      const row = createElement("article", "contact-row call-row");
+      row.append(createAvatar(item.name || item.phone));
+
+      const info = createElement("div", "contact-info");
+      info.append(createElement("span", "contact-name", item.name || "رقم غير محفوظ"));
+      info.append(createElement("span", "contact-phone", item.phone));
+      info.append(createElement("div", "call-meta", formatDate(item.at)));
+      const type = createElement("span", "tag", item.type === "internet" ? "اتصال عبر الإنترنت" : "طلب اتصال هاتفي");
+      info.append(type);
+      row.append(info);
+
+      const actions = createElement("div", "contact-actions");
+      actions.append(createButton("↻", "icon-btn", () => {
+        if (item.type === "internet") {
+          navigate("internet");
+          $("#internetTarget").value = item.phone;
+          showToast("أُعيد ملء الرقم. الخدمة غير مفعّلة بعد.", "warning");
+        } else {
+          startPhoneCall(item.phone);
+        }
+      }, "إعادة المحاولة"));
+
+      if (options.deletable) {
+        actions.append(createButton("×", "icon-btn", () => deleteHistoryItem(item.id), "حذف المحاولة"));
+      }
+
+      row.append(actions);
+      return row;
+    }
+
+    function renderHome() {
+      $("#statContacts").textContent = String(state.contacts.length);
+      $("#statFavorites").textContent = String(state.contacts.filter(c => c.favorite).length);
+      $("#statHistory").textContent = String(state.history.length);
+
+      const homeContacts = $("#homeContacts");
+      homeContacts.replaceChildren();
+      const contacts = sortedContacts().slice(0, 4);
+      if (!contacts.length) {
+        homeContacts.append(createEmpty(
+          "♙", "دفتر أرقامك فارغ", "أضف أول جهة اتصال لتصل إليها بسهولة.",
+          "إضافة جهة اتصال", () => openContactDialog()
+        ));
+      } else {
+        contacts.forEach(contact => homeContacts.append(renderContactRow(contact)));
+      }
+
+      const homeHistory = $("#homeHistory");
+      homeHistory.replaceChildren();
+      const history = state.history.slice(0, 4);
+      if (!history.length) {
+        homeHistory.append(createEmpty(
+          "◷", "لا توجد محاولات بعد", "ستظهر هنا محاولات الاتصال التي تبدأها من داخل التطبيق.",
+          "فتح لوحة الاتصال", () => navigate("dialer")
+        ));
+      } else {
+        history.forEach(item => homeHistory.append(renderHistoryRow(item)));
+      }
+    }
+
+    function renderContacts() {
+      const query = $("#contactSearch").value.trim().toLocaleLowerCase("ar");
+      const filtered = sortedContacts().filter(contact =>
+        contact.name.toLocaleLowerCase("ar").includes(query) ||
+        contact.phone.toLocaleLowerCase("ar").includes(query)
+      );
+      const list = $("#contactsList");
+      list.replaceChildren();
+
+      if (!filtered.length) {
+        list.append(createEmpty(
+          query ? "⌕" : "♙",
+          query ? "لا توجد نتائج مطابقة" : "لا توجد جهات اتصال",
+          query ? "جرّب البحث باسم مختلف أو رقم الهاتف." : "أضف الأسماء والأرقام التي تريد الاحتفاظ بها.",
+          query ? "مسح البحث" : "إضافة جهة اتصال",
+          query ? () => { $("#contactSearch").value = ""; renderContacts(); } : () => openContactDialog()
+        ));
+        return;
+      }
+
+      filtered.forEach(contact => list.append(renderContactRow(contact, { editable: true })));
+    }
+
+    function renderFavorites() {
+      const list = $("#favoritesList");
+      list.replaceChildren();
+      const favorites = sortedContacts().filter(contact => contact.favorite);
+      if (!favorites.length) {
+        list.append(createEmpty(
+          "☆", "لم تضف أرقامًا للمفضلة", "اضغط على النجمة بجوار أي جهة اتصال لإضافتها هنا.",
+          "عرض جهات الاتصال", () => navigate("contacts")
+        ));
+        return;
+      }
+      favorites.forEach(contact => list.append(renderContactRow(contact)));
+    }
+
+    function renderHistory() {
+      const type = $("#historyType").value;
+      const dateFilter = $("#historyDate").value;
+      const now = Date.now();
+      const thresholds = { today: 24 * 60 * 60 * 1000, week: 7 * 86400000, month: 30 * 86400000 };
+      const filtered = state.history.filter(item => {
+        if (type !== "all" && item.type !== type) return false;
+        if (dateFilter === "all") return true;
+        const date = safeDate(item.at);
+        if (!date) return false;
+        if (dateFilter === "today") {
+          const current = new Date();
+          return date.getFullYear() === current.getFullYear() &&
+            date.getMonth() === current.getMonth() &&
+            date.getDate() === current.getDate();
+        }
+        return now - date.getTime() <= thresholds[dateFilter] && date.getTime() <= now + 60000;
+      });
+
+      const list = $("#historyList");
+      list.replaceChildren();
+      if (!filtered.length) {
+        list.append(createEmpty(
+          "◷", "لا توجد محاولات مطابقة", "جرّب تغيير المرشحات أو ابدأ اتصالًا من لوحة الاتصال.",
+          "فتح لوحة الاتصال", () => navigate("dialer")
+        ));
+        return;
+      }
+      filtered.forEach(item => list.append(renderHistoryRow(item, { deletable: true })));
+    }
+
+    function renderAll() {
+      renderHome();
+      renderContacts();
+      renderFavorites();
+      renderHistory();
+      updateNavigation();
+    }
+
+    function updateNavigation() {
+      $$(".nav-btn[data-page]").forEach(button => {
+        const active = button.dataset.page === currentPage;
+        button.classList.toggle("active", active);
+        if (active) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+    }
+
+    const pageNames = new Set(["home", "dialer", "contacts", "favorites", "history", "internet", "settings"]);
+
+    function navigate(page) {
+      if (!pageNames.has(page)) return;
+      currentPage = page;
+      $$(".page").forEach(section => section.classList.toggle("active", section.id === "page-" + page));
+      state.settings.lastPage = page;
+      saveState();
+      updateNavigation();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (page === "dialer") {
+        window.setTimeout(() => $("#dialNumber").focus({ preventScroll: true }), 100);
+      }
+    }
+
+    /* =========================================================
+       إدارة جهات الاتصال والمفضلة
+    ========================================================= */
+
+    function openContactDialog(contact = null, presetPhone = "") {
+      const dialog = $("#contactDialog");
+      $("#contactDialogTitle").textContent = contact ? "تعديل جهة اتصال" : "إضافة جهة اتصال";
+      $("#contactId").value = contact?.id || "";
+      $("#contactName").value = contact?.name || "";
+      $("#contactPhone").value = contact?.phone || presetPhone || "";
+      $("#contactFavorite").checked = contact?.favorite === true;
+      if (typeof dialog.showModal === "function") {
+        if (!dialog.open) dialog.showModal();
+      } else {
+        showToast("المتصفح لا يدعم نافذة التحرير. حدّث المتصفح للمتابعة.", "error");
+      }
+      window.setTimeout(() => $("#contactName").focus(), 50);
+    }
+
+    function closeContactDialog() {
+      const dialog = $("#contactDialog");
+      if (dialog.open) dialog.close();
+    }
+
+    function saveContactFromForm(event) {
+      event.preventDefault();
+      const id = $("#contactId").value;
+      const name = $("#contactName").value.trim();
+      const phone = cleanPhone($("#contactPhone").value);
+      const favorite = $("#contactFavorite").checked;
+
+      if (!name || name.length > 100) {
+        showToast("أدخل اسمًا صحيحًا لا يتجاوز 100 حرف.", "error");
+        $("#contactName").focus();
+        return;
+      }
+      if (!validPhone(phone)) {
+        showToast("رقم الهاتف غير صالح. أدخل رقمًا يتضمن 3 أرقام على الأقل.", "error");
+        $("#contactPhone").focus();
+        return;
+      }
+
+      const duplicate = findDuplicate(phone, id);
+      if (duplicate) {
+        showToast("هذا الرقم محفوظ بالفعل باسم «" + duplicate.name + "».", "error");
+        return;
+      }
+
+      const existing = id ? contactById(id) : null;
+      if (id && !existing) {
+        showToast("لم تعد جهة الاتصال موجودة. حدّث القائمة وحاول مجددًا.", "error");
+        closeContactDialog();
+        renderAll();
+        return;
+      }
+      if (!existing && state.contacts.length >= MAX_CONTACTS) {
+        showToast("وصل دفتر الأرقام إلى الحد الأقصى المسموح.", "error");
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const contact = {
+        id: existing?.id || createId(),
+        name,
+        phone,
+        favorite,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now
+      };
+
+      if (existing) {
+        state.contacts = state.contacts.map(item => item.id === id ? contact : item);
+        state.history = state.history.map(item =>
+          item.contactId === id ? { ...item, name, phone } : item
+        );
+      } else {
+        state.contacts.push(contact);
+      }
+
+      if (saveState()) {
+        closeContactDialog();
+        renderAll();
+        showToast(existing ? "تم تحديث جهة الاتصال." : "تمت إضافة جهة الاتصال.");
+      }
+    }
+
+    function deleteContact(id) {
+      const contact = contactById(id);
+      if (!contact) return;
+      if (!window.confirm("هل تريد حذف جهة الاتصال «" + contact.name + "»؟ لن تُحذف محاولات الاتصال السابقة.")) return;
+      state.contacts = state.contacts.filter(item => item.id !== id);
+      state.history = state.history.map(item =>
+        item.contactId === id ? { ...item, contactId: "", name: "" } : item
+      );
+      persistAndRender("تم حذف جهة الاتصال.");
+    }
+
+    function toggleFavorite(id) {
+      const contact = contactById(id);
+      if (!contact) return;
+      contact.favorite = !contact.favorite;
+      contact.updatedAt = new Date().toISOString();
+      persistAndRender(contact.favorite ? "أُضيفت إلى المفضلة." : "أُزيلت من المفضلة.");
+    }
+
+    function showContactDetails(id) {
+      const contact = contactById(id);
+      if (!contact) {
+        showToast("جهة الاتصال غير موجودة.", "error");
+        return;
+      }
+      const content = $("#detailContent");
+      content.replaceChildren();
+
+      const row = createElement("div", "contact-row");
+      row.append(createAvatar(contact.name));
+      const info = createElement("div", "contact-info");
+      info.append(createElement("span", "contact-name", contact.name));
+      info.append(createElement("span", "contact-phone", contact.phone));
+      info.append(createElement("div", "call-meta", contact.favorite ? "ضمن المفضلة" : "ليست ضمن المفضلة"));
+      row.append(info);
+      content.append(row);
+
+      const actions = createElement("div", "form-actions");
+      actions.style.marginTop = "16px";
+      actions.append(createButton("☎ اتصال", "btn btn-primary", () => {
+        $("#detailDialog").close();
+        startPhoneCall(contact.phone);
+      }));
+      actions.append(createButton("✎ تعديل", "btn btn-secondary", () => {
+        $("#detailDialog").close();
+        openContactDialog(contact);
+      }));
+      actions.append(createButton(contact.favorite ? "إزالة من المفضلة" : "إضافة للمفضلة", "btn btn-secondary", () => {
+        toggleFavorite(contact.id);
+        $("#detailDialog").close();
+      }));
+      content.append(actions);
+
+      const dialog = $("#detailDialog");
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else showToast("تعذر فتح نافذة التفاصيل في هذا المتصفح.", "error");
+    }
+
+    /* =========================================================
+       لوحة الاتصال وسجل محاولات الاتصال
+    ========================================================= */
+
+    function setDialNumber(value) {
+      $("#dialNumber").value = normalizeDigits(value);
+      updateDialContactHint();
+    }
+
+    function appendDigit(digit) {
+      const input = $("#dialNumber");
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const next = input.value.slice(0, start) + digit + input.value.slice(end);
+      if (next.length > 40) {
+        showToast("لا يمكن أن يتجاوز الرقم 40 حرفًا.", "warning");
+        return;
+      }
+      setDialNumber(next);
+      input.focus();
+      const caret = start + digit.length;
+      try { input.setSelectionRange(caret, caret); } catch (_) {}
+    }
+
+    function deleteLastDigit() {
+      const input = $("#dialNumber");
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      if (start !== end) {
+        setDialNumber(input.value.slice(0, start) + input.value.slice(end));
+        input.focus();
+        try { input.setSelectionRange(start, start); } catch (_) {}
+        return;
+      }
+      if (start <= 0) return;
+      const next = input.value.slice(0, start - 1) + input.value.slice(end);
+      setDialNumber(next);
+      input.focus();
+      try { input.setSelectionRange(start - 1, start - 1); } catch (_) {}
+    }
+
+    function updateDialContactHint() {
+      const phone = cleanPhone($("#dialNumber").value);
+      const contact = phone ? findContactByPhone(phone) : null;
+      $("#dialContactHint").textContent = contact
+        ? "جهة الاتصال: " + contact.name
+        : "يمكنك كتابة الرقم أو استخدام لوحة الأرقام.";
+    }
+
+    function addHistory(phone, type) {
+      const contact = findContactByPhone(phone);
+      const item = {
+        id: createId(),
+        contactId: contact?.id || "",
+        name: contact?.name || "",
+        phone,
+        type,
+        at: new Date().toISOString(),
+        action: type === "internet" ? "محاولة اتصال عبر الإنترنت" : "طلب فتح الاتصال الهاتفي"
+      };
+      state.history.unshift(item);
+      state.history = state.history.slice(0, MAX_HISTORY);
+      return item;
+    }
+
+    function startPhoneCall(rawPhone) {
+      const phone = cleanPhone(rawPhone);
+      if (!validPhone(phone)) {
+        showToast("أدخل رقم هاتف صالحًا قبل محاولة الاتصال.", "error");
+        navigate("dialer");
+        $("#dialNumber").focus();
+        return;
+      }
+
+      addHistory(phone, "phone");
+      saveState();
+      renderAll();
+
+      // لا نعلن نجاح المكالمة؛ نطلب فقط من النظام فتح تطبيق الاتصال.
+      const uri = "tel:" + phone.replace(/[\s().-]/g, "");
+      try {
+        window.location.href = uri;
+        showToast("تم إرسال طلب فتح تطبيق الاتصال. تحقق من جهازك لإكمال العملية.", "warning");
+      } catch (error) {
+        console.error("تعذر فتح تطبيق الاتصال:", error);
+        showToast("تعذر فتح تطبيق الاتصال من المتصفح.", "error");
+      }
+    }
+
+    async function copyDialNumber() {
+      const phone = cleanPhone($("#dialNumber").value);
+      if (!phone) {
+        showToast("لا يوجد رقم لنسخه.", "error");
+        return;
+      }
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(phone);
+        } else {
+          const temporary = document.createElement("textarea");
+          temporary.value = phone;
+          temporary.style.position = "fixed";
+          temporary.style.opacity = "0";
+          document.body.appendChild(temporary);
+          temporary.select();
+          const copied = document.execCommand("copy");
+          temporary.remove();
+          if (!copied) throw new Error("نسخ غير مدعوم");
+        }
+        showToast("تم نسخ الرقم.");
+      } catch (_) {
+        showToast("تعذر النسخ تلقائيًا. حدّد الرقم وانسخه يدويًا.", "error");
+      }
+    }
+
+    function deleteHistoryItem(id) {
+      if (!state.history.some(item => item.id === id)) return;
+      state.history = state.history.filter(item => item.id !== id);
+      persistAndRender("تم حذف المحاولة من السجل.");
+    }
+
+    function clearHistory() {
+      if (!state.history.length) {
+        showToast("السجل فارغ بالفعل.", "warning");
+        return;
+      }
+      if (!window.confirm("هل تريد مسح سجل محاولات الاتصال بالكامل؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+      state.history = [];
+      persistAndRender("تم مسح سجل المحاولات.");
+    }
+
+    /* =========================================================
+       استيراد CSV ودفتر الهاتف
+    ========================================================= */
+
+    function parseCsvLine(line) {
+      const values = [];
+      let current = "";
+      let quoted = false;
+      for (let i = 0; i < line.length; i++) {
+        const character = line[i];
+        if (character === '"') {
+          if (quoted && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            quoted = !quoted;
+          }
+        } else if (character === "," && !quoted) {
+          values.push(current.trim());
+          current = "";
+        } else {
+          current += character;
+        }
+      }
+      values.push(current.trim());
+      return values;
+    }
+
+    function importCsvText(text) {
+      const lines = String(text).replace(/^\uFEFF/, "").split(/\r?\n/).filter(line => line.trim());
+      if (!lines.length) {
+        showToast("ملف CSV فارغ.", "error");
+        return;
+      }
+      const first = parseCsvLine(lines[0]).map(value => value.toLowerCase().trim());
+      const nameHeaders = ["name", "الاسم", "الاسم الكامل", "full name", "display name"];
+      const phoneHeaders = ["phone", "telephone", "mobile", "رقم الهاتف", "الهاتف", "الجوال", "رقم"];
+      let nameIndex = first.findIndex(value => nameHeaders.includes(value));
+      let phoneIndex = first.findIndex(value => phoneHeaders.includes(value));
+      let startIndex = 0;
+
+      if (nameIndex >= 0 && phoneIndex >= 0) {
+        startIndex = 1;
+      } else {
+        nameIndex = 0;
+        phoneIndex = 1;
+      }
+
+      let added = 0;
+      let skipped = 0;
+      const seen = new Set(state.contacts.map(contact => phoneKey(contact.phone)));
+
+      for (const line of lines.slice(startIndex)) {
+        const cells = parseCsvLine(line);
+        const name = String(cells[nameIndex] ?? "").trim();
+        const phone = cleanPhone(cells[phoneIndex] ?? "");
+        if (!name || !validPhone(phone) || seen.has(phoneKey(phone))) {
+          skipped++;
+          continue;
+        }
+        const now = new Date().toISOString();
+        state.contacts.push({
+          id: createId(), name: name.slice(0, 100), phone, favorite: false,
+          createdAt: now, updatedAt: now
+        });
+        seen.add(phoneKey(phone));
+        added++;
+        if (state.contacts.length >= MAX_CONTACTS) break;
+      }
+
+      if (added > 0) {
+        if (!saveState()) return;
+        renderAll();
+      }
+      showToast("تم استيراد " + added + " جهة اتصال، وتجاوز " + skipped + " سجلًا غير صالح أو مكررًا.", added ? "success" : "warning");
+    }
+
+    async function importCsvFile(file) {
+      if (!file) return;
+      if (file.size > MAX_IMPORT_BYTES) {
+        showToast("حجم الملف أكبر من الحد المسموح (5 ميغابايت).", "error");
+        return;
+      }
+      try {
+        const text = await file.text();
+        importCsvText(text);
+      } catch (error) {
+        console.error(error);
+        showToast("تعذرت قراءة ملف CSV.", "error");
+      }
+    }
+
+    async function importDeviceContacts() {
+      if (!("contacts" in navigator) || typeof navigator.contacts?.select !== "function") {
+        showToast("استيراد دفتر الهاتف غير مدعوم في هذا المتصفح أو الجهاز. يمكنك استخدام ملف CSV.", "warning");
+        return;
+      }
+      try {
+        const results = await navigator.contacts.select(["name", "tel"], { multiple: true });
+        if (!Array.isArray(results) || !results.length) {
+          showToast("لم يتم اختيار جهات اتصال.", "warning");
+          return;
+        }
+        let added = 0;
+        let skipped = 0;
+        const seen = new Set(state.contacts.map(contact => phoneKey(contact.phone)));
+
+        for (const result of results) {
+          const name = Array.isArray(result.name) ? String(result.name[0] || "").trim() : "";
+          const numbers = Array.isArray(result.tel) ? result.tel : [];
+          const phone = cleanPhone(numbers[0] || "");
+          if (!name || !validPhone(phone) || seen.has(phoneKey(phone))) {
+            skipped++;
+            continue;
+          }
+          const now = new Date().toISOString();
+          state.contacts.push({
+            id: createId(), name: name.slice(0, 100), phone, favorite: false,
+            createdAt: now, updatedAt: now
+          });
+          seen.add(phoneKey(phone));
+          added++;
+          if (state.contacts.length >= MAX_CONTACTS) break;
+        }
+
+        if (added > 0 && !saveState()) return;
+        renderAll();
+        showToast("أُضيفت " + added + " جهة اتصال، وتُجاوز " + skipped + " سجلًا غير صالح أو مكررًا.", added ? "success" : "warning");
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          showToast("ألغيت عملية اختيار جهات الاتصال.", "warning");
+        } else {
+          console.error("Contacts Picker:", error);
+          showToast("تعذر استيراد جهات الاتصال. تحقق من إذن المتصفح ودعمه للميزة.", "error");
+        }
+      }
+    }
+
+    /* =========================================================
+       النسخ الاحتياطي JSON
+    ========================================================= */
+
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function exportBackup() {
+      try {
+        const backup = {
+          application: "اتصل",
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          contacts: state.contacts,
+          history: state.history,
+          settings: state.settings
+        };
+        const date = new Date().toISOString().slice(0, 10);
+        downloadFile("اتصل-نسخة-احتياطية-" + date + ".json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
+        showToast("تم تجهيز ملف النسخة الاحتياطية.");
+      } catch (error) {
+        console.error(error);
+        showToast("تعذر إنشاء النسخة الاحتياطية.", "error");
+      }
+    }
+
+    async function importBackupFile(file) {
+      if (!file) return;
+      if (file.size > MAX_IMPORT_BYTES) {
+        showToast("حجم النسخة الاحتياطية أكبر من 5 ميغابايت.", "error");
+        return;
+      }
+      try {
+        const raw = JSON.parse(await file.text());
+        if (!window.confirm("سيؤدي الاستيراد إلى استبدال بيانات التطبيق الحالية بالبيانات الموجودة في الملف. هل تريد المتابعة؟")) return;
+        const normalized = normalizeState(raw);
+        const previousState = state;
+        state = normalized;
+        if (!saveState()) {
+          state = previousState;
+          renderAll();
+          return;
+        }
+        renderAll();
+        showToast("تم استيراد النسخة الاحتياطية والتحقق من بياناتها.");
+      } catch (error) {
+        console.error("Backup import:", error);
+        showToast("تعذر استيراد الملف. تأكد من أنه نسخة JSON صحيحة من تطبيق اتصل.", "error");
+      }
+    }
+
+    function deleteAllData() {
+      if (!window.confirm("هل أنت متأكد من حذف جميع جهات الاتصال والمفضلة وسجل المحاولات؟")) return;
+      if (!window.confirm("هذا الإجراء نهائي. يُفضّل تصدير نسخة احتياطية أولًا. هل تريد حذف كل البيانات الآن؟")) return;
+
+      const previous = state;
+      state = emptyState();
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        storageAvailable = true;
+        $("#contactSearch").value = "";
+        renderAll();
+        showToast("تم حذف جميع البيانات المحلية.");
+      } catch (error) {
+        state = previous;
+        console.error(error);
+        showToast("تعذر حذف البيانات من التخزين المحلي.", "error");
+      }
+    }
+
+    /* =========================================================
+       الاتصال عبر الإنترنت — واجهة صريحة غير وهمية
+    ========================================================= */
+
+    function startInternetAttempt() {
+      const target = $("#internetTarget").value.trim();
+      if (!target) {
+        showToast("أدخل رقمًا أو معرّف مستخدم أولًا.", "error");
+        $("#internetTarget").focus();
+        return;
+      }
+
+      const normalized = cleanPhone(target);
+      if (validPhone(normalized)) {
+        addHistory(normalized, "internet");
+        saveState();
+        renderAll();
+      }
+
+      $("#internetMessage").textContent =
+        "لم يبدأ الاتصال: لم يتم ربط مزود خدمة أو خادم مكالمات. لم تُنشأ جلسة اتصال حقيقية.";
+      showToast("خدمة المكالمات عبر الإنترنت غير مفعّلة. لم يتم إجراء اتصال.", "warning");
+    }
+
+    /* =========================================================
+       ربط الأحداث وبدء التطبيق
+    ========================================================= */
+
+    function bindEvents() {
+      $$("[data-page]").forEach(button => {
+        button.addEventListener("click", () => navigate(button.dataset.page));
+      });
+
+      $$("[data-go]").forEach(button => {
+        button.addEventListener("click", () => navigate(button.dataset.go));
+      });
+
+      $("#headerDialBtn").addEventListener("click", () => navigate("dialer"));
+      $("#headerAddBtn").addEventListener("click", () => openContactDialog());
+      $("#addContactBtn").addEventListener("click", () => openContactDialog());
+      $("#contactForm").addEventListener("submit", saveContactFromForm);
+      $("#closeContactDialog").addEventListener("click", closeContactDialog);
+      $("#cancelContactDialog").addEventListener("click", closeContactDialog);
+
+      $("#closeDetailDialog").addEventListener("click", () => $("#detailDialog").close());
+      $("#detailCloseBtn").addEventListener("click", () => $("#detailDialog").close());
+
+      $("#contactSearch").addEventListener("input", renderContacts);
+      $("#historyType").addEventListener("change", renderHistory);
+      $("#historyDate").addEventListener("change", renderHistory);
+      $("#clearHistoryBtn").addEventListener("click", clearHistory);
+
+      $("#dialPad").addEventListener("click", event => {
+        const button = event.target.closest("[data-digit]");
+        if (button) appendDigit(button.dataset.digit);
+      });
+
+      $("#dialNumber").addEventListener("input", () => {
+        const input = $("#dialNumber");
+        const normalized = normalizeDigits(input.value);
+        if (normalized !== input.value) {
+          const position = input.selectionStart;
+          input.value = normalized;
+          try { input.setSelectionRange(position, position); } catch (_) {}
+        }
+        updateDialContactHint();
+      });
+
+      $("#deleteDigitBtn").addEventListener("click", deleteLastDigit);
+      $("#clearNumberBtn").addEventListener("click", () => {
+        setDialNumber("");
+        $("#dialNumber").focus();
+      });
+      $("#copyNumberBtn").addEventListener("click", copyDialNumber);
+      $("#callButton").addEventListener("click", () => startPhoneCall($("#dialNumber").value));
+      $("#saveDialContactBtn").addEventListener("click", () => {
+        const phone = cleanPhone($("#dialNumber").value);
+        if (!validPhone(phone)) {
+          showToast("أدخل رقمًا صالحًا قبل حفظ جهة الاتصال.", "error");
+          return;
+        }
+        const existing = findContactByPhone(phone);
+        if (existing) {
+          showToast("الرقم محفوظ بالفعل باسم «" + existing.name + "».", "warning");
+          openContactDialog(existing);
+          return;
+        }
+        openContactDialog(null, phone);
+      });
+
+      $("#importCsvBtn").addEventListener("click", () => $("#csvFile").click());
+      $("#csvFile").addEventListener("change", async event => {
+        await importCsvFile(event.target.files?.[0]);
+        event.target.value = "";
+      });
+      $("#deviceContactsBtn").addEventListener("click", importDeviceContacts);
+
+      $("#exportBtn").addEventListener("click", exportBackup);
+      $("#importBackupBtn").addEventListener("click", () => $("#backupFile").click());
+      $("#backupFile").addEventListener("change", async event => {
+        await importBackupFile(event.target.files?.[0]);
+        event.target.value = "";
+      });
+      $("#deleteAllBtn").addEventListener("click", deleteAllData);
+
+      $("#internetStartBtn").addEventListener("click", startInternetAttempt);
+      $("#internetEndBtn").addEventListener("click", () => {
+        $("#internetMessage").textContent = "لا توجد مكالمة نشطة لإنهائها.";
+      });
+
+      // اختصارات لوحة المفاتيح للوحة الاتصال، دون تعطيل الحقول الأخرى.
+      document.addEventListener("keydown", event => {
+        const tag = event.target?.tagName;
+        const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(tag) ||
+          event.target?.isContentEditable;
+
+        if (event.key === "Escape") {
+          if ($("#contactDialog").open) $("#contactDialog").close();
+          if ($("#detailDialog").open) $("#detailDialog").close();
+          return;
+        }
+
+        if (currentPage !== "dialer" || isTyping || event.ctrlKey || event.metaKey || event.altKey) return;
+
+        if (/^[0-9*#]$/.test(event.key)) {
+          event.preventDefault();
+          appendDigit(event.key);
+        } else if (event.key === "Backspace") {
+          event.preventDefault();
+          deleteLastDigit();
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          startPhoneCall($("#dialNumber").value);
+        }
+      });
+
+      // إغلاق النوافذ عند النقر على الخلفية فقط.
+      ["contactDialog", "detailDialog"].forEach(id => {
+        const dialog = $("#" + id);
+        dialog.addEventListener("click", event => {
+          if (event.target === dialog) dialog.close();
+        });
+      });
+    }
+
+    function init() {
+      loadState();
+      bindEvents();
+
+      // لا نستعيد صفحة سابقة غير معروفة أو صفحة مخفية لأسباب غير متوقعة.
+      const lastPage = state.settings?.lastPage;
+      currentPage = pageNames.has(lastPage) ? lastPage : "home";
+
+      renderAll();
+      navigate(currentPage);
+
+      if (!storageAvailable) {
+        showToast("التطبيق يعمل في الذاكرة الحالية، لكن حفظ البيانات غير مضمون.", "warning");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
